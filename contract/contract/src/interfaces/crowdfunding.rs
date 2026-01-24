@@ -1,8 +1,8 @@
-use soroban_sdk::{Address, BytesN, Env, String};
+use soroban_sdk::{Address, BytesN, Env, String, Vec};
 
 use crate::base::{
     errors::CrowdfundingError,
-    types::{CampaignDetails, PoolConfig, PoolState},
+    types::{CampaignDetails, DisbursementRequest, PoolConfig, PoolState},
 };
 
 pub trait CrowdfundingTrait {
@@ -24,6 +24,8 @@ pub trait CrowdfundingTrait {
         creator: Address,
         target_amount: i128,
         deadline: u64,
+        required_signatures: Option<u32>,
+        signers: Option<Vec<Address>>,
     ) -> Result<u64, CrowdfundingError>;
 
     fn get_pool(env: Env, pool_id: u64) -> Option<PoolConfig>;
@@ -41,4 +43,13 @@ pub trait CrowdfundingTrait {
     fn unpause(env: Env) -> Result<(), CrowdfundingError>;
 
     fn is_paused(env: Env) -> bool;
+
+    fn contribute(
+        env: Env,
+        pool_id: u64,
+        contributor: Address,
+        asset: Address,
+        amount: i128,
+        is_private: bool,
+    ) -> Result<(), CrowdfundingError>;
 }

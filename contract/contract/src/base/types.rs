@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address, BytesN, String};
+use soroban_sdk::{contracttype, Address, BytesN, String, Vec};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -8,6 +8,13 @@ pub struct CampaignDetails {
     pub creator: Address,
     pub goal: i128,
     pub deadline: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MultiSigConfig {
+    pub required_signatures: u32,
+    pub signers: Vec<Address>,
 }
 
 // Updated pool configuration for donation pools
@@ -72,6 +79,17 @@ impl PoolMetrics {
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisbursementRequest {
+    pub pool_id: u64,
+    pub amount: i128,
+    pub recipient: Address,
+    pub approvals: Vec<Address>,
+    pub created_at: u64,
+    pub executed: bool,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StorageKey {
     Pool(u64),
     PoolState(u64),
@@ -84,6 +102,9 @@ pub enum StorageKey {
     TokenDecimals,
     TotalSupply,
     TokenBalance,
+    MultiSigConfig(u64),
+    DisbursementRequest(u64, u64),
+    NextDisbursementId(u64),
 }
 
 #[cfg(test)]
