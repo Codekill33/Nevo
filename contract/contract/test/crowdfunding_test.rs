@@ -2798,6 +2798,60 @@ fn test_get_active_campaign_count_exactly_at_deadline() {
         &String::from_str(&env, "Edge Deadline"),
         &creator,
         &1000i128,
+fn test_withdraw_platform_fees_success() {
+    let env = Env::default();
+    let (client, admin, token_address) = setup_test(&env);
+
+    client.set_creation_fee(&100);
+
+    let creator = Address::generate(&env);
+    let token_admin_client = soroban_sdk::token::StellarAssetClient::new(&env, &token_address);
+    token_admin_client.mint(&creator, &1_000i128);
+
+    let campaign_id = create_test_campaign_id(&env, 1);
+    let title = String::from_str(&env, "Campaign with fee");
+    let goal = 10_000i128;
+    let deadline = env.ledger().timestamp() + 86400;
+
+    client.create_campaign(
+        &campaign_id,
+        &title,
+        &creator,
+        &goal,
+        &deadline,
+        &token_address,
+    );
+
+    let token_client = token::Client::new(&env, &token_address);
+    let admin_balance_before = token_client.balance(&admin);
+
+    client.withdraw_platform_fees(&admin, &100);
+
+    let admin_balance_after = token_client.balance(&admin);
+    assert_eq!(admin_balance_after - admin_balance_before, 100);
+}
+
+#[test]
+fn test_withdraw_platform_fees_non_admin_fails() {
+    let env = Env::default();
+    let (client, _, token_address) = setup_test(&env);
+
+    client.set_creation_fee(&100);
+
+    let creator = Address::generate(&env);
+    let token_admin_client = soroban_sdk::token::StellarAssetClient::new(&env, &token_address);
+    token_admin_client.mint(&creator, &1_000i128);
+
+    let campaign_id = create_test_campaign_id(&env, 2);
+    let title = String::from_str(&env, "Campaign with fee 2");
+    let goal = 10_000i128;
+    let deadline = env.ledger().timestamp() + 86400;
+
+    client.create_campaign(
+        &campaign_id,
+        &title,
+        &creator,
+        &goal,
         &deadline,
         &token_address,
     );
@@ -2888,4 +2942,16 @@ fn test_get_active_campaign_count_unaffected_by_donation_status() {
 
     // fully funded but deadline not passed - still counts as active
     assert_eq!(client.get_active_campaign_count(), 1);
+    let non_admin = Address::generate(&env);
+    let res = client.try_withdraw_platform_fees(&non_admin, &100);
+    assert_eq!(res, Err(Ok(CrowdfundingError::Unauthorized)));
+}
+
+#[test]
+fn test_withdraw_platform_fees_insufficient_fees() {
+    let env = Env::default();
+    let (client, admin, _) = setup_test(&env);
+
+    let res = client.try_withdraw_platform_fees(&admin, &100);
+    assert_eq!(res, Err(Ok(CrowdfundingError::InsufficientFees)));
 }
