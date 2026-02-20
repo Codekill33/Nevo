@@ -6,3 +6,6 @@ target
 .stellar
 
 
+
+# Snapshots
+test_snapshots/
