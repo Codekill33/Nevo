@@ -49,6 +49,12 @@ pub trait CrowdfundingTrait {
         amount: i128,
     ) -> Result<(), CrowdfundingError>;
 
+    fn extend_campaign_deadline(
+        env: Env,
+        campaign_id: BytesN<32>,
+        new_deadline: u64,
+    ) -> Result<(), CrowdfundingError>;
+
     fn create_pool(
         env: Env,
         creator: Address,

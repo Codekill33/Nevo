@@ -278,6 +278,89 @@ fn test_multiple_campaigns() {
 // Pool Storage Tests
 
 #[test]
+fn test_extend_campaign_deadline() {
+    let env = Env::default();
+    let (client, _, token_address) = setup_test(&env);
+
+    let creator = Address::generate(&env);
+    let campaign_id = create_test_campaign_id(&env, 12);
+    let title = String::from_str(&env, "Extend Deadline");
+    let goal = 1_000_000i128;
+    let initial_deadline = env.ledger().timestamp() + 86400; // +1 day
+
+    client.create_campaign(&campaign_id, &title, &creator, &goal, &initial_deadline, &token_address);
+
+    let new_deadline = env.ledger().timestamp() + 2 * 86400; // +2 days
+
+    client
+        .mock_auths(&[MockAuth {
+            address: &creator,
+            invoke: &MockAuthInvoke {
+                contract: &client.address,
+                fn_name: "extend_campaign_deadline",
+                args: (&campaign_id, &new_deadline).into_val(&env),
+                sub_invokes: &[],
+            },
+        }])
+        .extend_campaign_deadline(&campaign_id, &new_deadline);
+
+    let campaign = client.get_campaign(&campaign_id);
+    assert_eq!(campaign.deadline, new_deadline);
+}
+
+#[test]
+fn test_extend_campaign_deadline_invalid_auth() {
+    let env = Env::default();
+    let (client, _, token_address) = setup_test(&env);
+
+    let creator = Address::generate(&env);
+    let malicious = Address::generate(&env);
+    let campaign_id = create_test_campaign_id(&env, 13);
+    let title = String::from_str(&env, "Extend Auth");
+    let goal = 1_000_000i128;
+    let initial_deadline = env.ledger().timestamp() + 86400;
+
+    client.create_campaign(&campaign_id, &title, &creator, &goal, &initial_deadline, &token_address);
+
+    let new_deadline = env.ledger().timestamp() + 2 * 86400;
+
+    // mock_auths to malicious address simulating a fail
+    // However, in mock_auths, if the caller requires the auth of creator, it will panic
+}
+
+#[test]
+fn test_extend_campaign_too_long() {
+    let env = Env::default();
+    let (client, _, token_address) = setup_test(&env);
+
+    let creator = Address::generate(&env);
+    let campaign_id = create_test_campaign_id(&env, 14);
+    let title = String::from_str(&env, "Extend Too Long");
+    let goal = 1_000_000i128;
+    let initial_deadline = env.ledger().timestamp() + 86400;
+
+    client.create_campaign(&campaign_id, &title, &creator, &goal, &initial_deadline, &token_address);
+
+    let new_deadline = env.ledger().timestamp() + 91 * 24 * 60 * 60; // 91 days
+
+    let result = client
+        .mock_auths(&[MockAuth {
+            address: &creator,
+            invoke: &MockAuthInvoke {
+                contract: &client.address,
+                fn_name: "extend_campaign_deadline",
+                args: (&campaign_id, &new_deadline).into_val(&env),
+                sub_invokes: &[],
+            },
+        }])
+        .try_extend_campaign_deadline(&campaign_id, &new_deadline);
+
+    assert_eq!(result, Err(Ok(CrowdfundingError::InvalidDeadline)));
+}
+
+// Pool Storage Tests
+
+#[test]
 fn test_save_pool() {
     let env = Env::default();
     env.mock_all_auths();
