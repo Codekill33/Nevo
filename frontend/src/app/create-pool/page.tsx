@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Loader2,
@@ -32,7 +31,6 @@ interface FormData {
 type SubmissionState = "idle" | "submitting" | "success" | "error";
 
 export default function CreatePoolPage() {
-  const router = useRouter();
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [isCheckingWallet, setIsCheckingWallet] = useState(true);
   const [formData, setFormData] = useState<FormData>({
