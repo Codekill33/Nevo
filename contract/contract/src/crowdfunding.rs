@@ -470,6 +470,46 @@ impl CrowdfundingTrait for CrowdfundingContract {
             .ok_or(CrowdfundingError::CampaignNotFound)
     }
 
+    fn extend_campaign_deadline(
+        env: Env,
+        campaign_id: BytesN<32>,
+        new_deadline: u64,
+    ) -> Result<(), CrowdfundingError> {
+        if Self::is_paused(env.clone()) {
+            return Err(CrowdfundingError::ContractPaused);
+        }
+
+        let mut campaign = Self::get_campaign(env.clone(), campaign_id.clone())?;
+
+        // Must require creator's signature
+        campaign.creator.require_auth();
+
+        // if they haven't reached their goal yet
+        if campaign.total_raised >= campaign.goal {
+            return Err(CrowdfundingError::CampaignAlreadyFunded);
+        }
+
+        let current_time = env.ledger().timestamp();
+
+        if new_deadline <= campaign.deadline {
+            return Err(CrowdfundingError::InvalidDeadline);
+        }
+
+        // Extension must not exceed a maximum duration (e.g., 90 days total)
+        // Ensure new deadline is not more than 90 days from current time
+        let max_duration = 90 * 24 * 60 * 60;
+        if new_deadline.saturating_sub(current_time) > max_duration {
+            return Err(CrowdfundingError::InvalidDeadline);
+        }
+
+        campaign.deadline = new_deadline;
+
+        let campaign_key = (campaign_id.clone(),);
+        env.storage().instance().set(&campaign_key, &campaign);
+
+        Ok(())
+    }
+
     fn get_campaigns(env: Env, ids: Vec<BytesN<32>>) -> Vec<CampaignDetails> {
         let mut results = Vec::new(&env);
         for id in ids.iter() {
