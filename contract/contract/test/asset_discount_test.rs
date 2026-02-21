@@ -133,19 +133,12 @@ fn test_contribute_with_platform_fee_no_discount() {
     client.contribute(&pool_id, &contributor, &token_address, &amount, &false);
 
     // Expected: 5% fee = 50 tokens, net contribution = 950 tokens
-    let expected_fee = 50i128;
-    let expected_net = 950i128;
-
     // Verify token balances
     assert_eq!(token_client.balance(&contributor), 9000i128); // 10000 - 1000
     assert_eq!(
         token_client.balance(&client.address),
         1000i128 // Full amount transferred
     );
-
-    // Verify pool metrics show net contribution
-    // Note: We don't have a direct getter for pool metrics in the interface,
-    // but we can verify through the contribution tracking
 }
 
 #[test]
