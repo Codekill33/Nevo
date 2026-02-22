@@ -60,7 +60,7 @@ export async function executeDonation(
   });
 
   const signedTx = StellarSdk.TransactionBuilder.fromXDR(
-    signedXdr,
+    signedXdr.signedTxXdr,
     StellarSdk.Networks.PUBLIC
   );
 
