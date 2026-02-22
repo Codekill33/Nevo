@@ -1269,4 +1269,64 @@ impl CrowdfundingTrait for CrowdfundingContract {
         let key = StorageKey::PlatformFeePercentage;
         env.storage().instance().get(&key).unwrap_or(0)
     }
+
+    fn get_contract_version(env: Env) -> String {
+        String::from_str(&env, "1.2.0")
+    }
+
+    fn blacklist_address(env: Env, address: Address) -> Result<(), CrowdfundingError> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&StorageKey::Admin)
+            .ok_or(CrowdfundingError::NotInitialized)?;
+        admin.require_auth();
+
+        let blacklist_key = StorageKey::Blacklist(address.clone());
+        env.storage().persistent().set(&blacklist_key, &true);
+
+        events::address_blacklisted(&env, admin, address);
+
+        Ok(())
+    }
+
+    fn unblacklist_address(env: Env, address: Address) -> Result<(), CrowdfundingError> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&StorageKey::Admin)
+            .ok_or(CrowdfundingError::NotInitialized)?;
+        admin.require_auth();
+
+        let blacklist_key = StorageKey::Blacklist(address.clone());
+        env.storage().persistent().remove(&blacklist_key);
+
+        events::address_unblacklisted(&env, admin, address);
+
+        Ok(())
+    }
+
+    fn is_blacklisted(env: Env, address: Address) -> bool {
+        let blacklist_key = StorageKey::Blacklist(address);
+        env.storage()
+            .persistent()
+            .get(&blacklist_key)
+            .unwrap_or(false)
+    }
+
+    fn get_campaign_fee_history(
+        env: Env,
+        campaign_id: BytesN<32>,
+    ) -> Result<i128, CrowdfundingError> {
+        // Validate campaign exists
+        Self::get_campaign(env.clone(), campaign_id.clone())?;
+
+        let fee_history_key = StorageKey::CampaignFeeHistory(campaign_id);
+        let current_fees: i128 = env
+            .storage()
+            .persistent()
+            .get(&fee_history_key)
+            .unwrap_or(0);
+        Ok(current_fees)
+    }
 }
