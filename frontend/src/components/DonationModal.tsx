@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, DollarSign, Wallet } from "lucide-react";
+import { generateTaxReceiptPDF } from "../lib/pdfGenerator";
 
 interface DonationModalProps {
   isOpen: boolean;
@@ -38,6 +39,16 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const handleDonate = () => {
     // Implement actual donation logic here later
     console.log(`Donating ${amount} ${asset} to ${poolTitle}`);
+
+    // Generate Tax Receipt PDF
+    generateTaxReceiptPDF({
+      poolTitle,
+      amount,
+      asset,
+      date: new Date(),
+      receiptId: `TXN-${Math.floor(Math.random() * 1000000).toString().padStart(6, "0")}`
+    });
+
     onClose();
   };
 
@@ -81,11 +92,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <button
                   key={a}
                   onClick={() => setAsset(a)}
-                  className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-xl border transition-all ${
-                    asset === a
+                  className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-xl border transition-all ${asset === a
                       ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
                       : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400"
-                  }`}
+                    }`}
                 >
                   <Wallet size={16} />
                   <span className="font-semibold">{a}</span>
