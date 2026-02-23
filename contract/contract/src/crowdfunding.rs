@@ -871,7 +871,11 @@ impl CrowdfundingTrait for CrowdfundingContract {
         if Self::is_paused(env.clone()) {
             return Err(CrowdfundingError::ContractPaused);
         }
-        
+        // Ensure pool exists
+        let pool_key = StorageKey::Pool(pool_id);
+        if !env.storage().instance().has(&pool_key) {
+            return Err(CrowdfundingError::PoolNotFound);
+        }
 
         // Validate state transition (optional - could add more complex logic)
         let state_key = StorageKey::PoolState(pool_id);
