@@ -688,6 +688,10 @@ impl CrowdfundingTrait for CrowdfundingContract {
         // Store config
         env.storage().instance().set(&pool_key, &config);
 
+        // Store pool creator
+        let creator_key = StorageKey::PoolCreator(pool_id);
+        env.storage().instance().set(&creator_key, &creator);
+
         // Initialize state
         let state_key = StorageKey::PoolState(pool_id);
         env.storage().instance().set(&state_key, &PoolState::Active);
@@ -1526,5 +1530,63 @@ impl CrowdfundingTrait for CrowdfundingContract {
             .persistent()
             .get(&blacklist_key)
             .unwrap_or(false)
+    }
+
+    fn update_pool_metadata_hash(
+        env: Env,
+        pool_id: u64,
+        caller: Address,
+        new_metadata_hash: String,
+    ) -> Result<(), CrowdfundingError> {
+        if CrowdfundingContract::is_paused(env.clone()) {
+            return Err(CrowdfundingError::ContractPaused);
+        }
+        caller.require_auth();
+
+        // Validate metadata hash length
+        if new_metadata_hash.len() > MAX_HASH_LENGTH {
+            return Err(CrowdfundingError::InvalidMetadata);
+        }
+
+        // Check if pool exists
+        let pool_key = StorageKey::Pool(pool_id);
+        if !env.storage().instance().has(&pool_key) {
+            return Err(CrowdfundingError::PoolNotFound);
+        }
+
+        // Verify caller is the pool creator
+        let creator_key = StorageKey::PoolCreator(pool_id);
+        let creator: Address = env
+            .storage()
+            .instance()
+            .get(&creator_key)
+            .ok_or(CrowdfundingError::PoolNotFound)?;
+
+        if caller != creator {
+            return Err(CrowdfundingError::Unauthorized);
+        }
+
+        // Get existing metadata
+        let metadata_key = StorageKey::PoolMetadata(pool_id);
+        let mut metadata: PoolMetadata =
+            env.storage()
+                .persistent()
+                .get(&metadata_key)
+                .unwrap_or(PoolMetadata {
+                    description: String::from_str(&env, ""),
+                    external_url: String::from_str(&env, ""),
+                    image_hash: String::from_str(&env, ""),
+                });
+
+        // Update the image hash
+        metadata.image_hash = new_metadata_hash.clone();
+
+        // Save updated metadata
+        env.storage().persistent().set(&metadata_key, &metadata);
+
+        // Emit event
+        events::pool_metadata_updated(&env, pool_id, caller, new_metadata_hash);
+
+        Ok(())
     }
 }

@@ -245,6 +245,7 @@ pub enum StorageKey {
 
     ReentrancyLock(u64),
     EmergencyWithdrawalLock,
+    PoolCreator(u64),
 }
 
 #[cfg(test)]
