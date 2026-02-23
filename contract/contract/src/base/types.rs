@@ -242,6 +242,7 @@ pub enum StorageKey {
     EmergencyContact,
     CampaignFeeHistory(BytesN<32>),
     Blacklist(Address),
+    PoolCreator(u64),
 }
 
 #[cfg(test)]
