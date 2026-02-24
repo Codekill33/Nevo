@@ -180,13 +180,10 @@ pub trait CrowdfundingTrait {
 
     fn is_blacklisted(env: Env, address: Address) -> bool;
 
-    fn claim_campaign_funds(
+    fn update_pool_metadata_hash(
         env: Env,
-        campaign_id: BytesN<32>,
+        pool_id: u64,
+        caller: Address,
+        new_metadata_hash: String,
     ) -> Result<(), CrowdfundingError>;
-
-    fn batch_claim_campaign_funds(
-        env: Env,
-        campaign_ids: Vec<BytesN<32>>,
-    ) -> Vec<Result<(), CrowdfundingError>>;
 }
