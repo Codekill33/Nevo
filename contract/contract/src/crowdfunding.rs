@@ -36,11 +36,6 @@ impl CrowdfundingTrait for CrowdfundingContract {
         }
         creator.require_auth();
 
-        // Check if creator is blacklisted
-        if Self::is_blacklisted(env.clone(), creator.clone()) {
-            return Err(CrowdfundingError::UserBlacklisted);
-        }
-
         if title.is_empty() {
             return Err(CrowdfundingError::InvalidTitle);
         }
@@ -377,11 +372,6 @@ impl CrowdfundingTrait for CrowdfundingContract {
         let cancellation_key = StorageKey::CampaignCancelled(campaign_id.clone());
         if env.storage().instance().has(&cancellation_key) {
             return Err(CrowdfundingError::CampaignCancelled);
-        }
-
-        // Check if donor is blacklisted
-        if Self::is_blacklisted(env.clone(), donor.clone()) {
-            return Err(CrowdfundingError::UserBlacklisted);
         }
 
         // Validate donation amount
