@@ -27,11 +27,14 @@ pub fn pool_created(
     description: String,
     creator: Address,
     target_amount: i128,
+    min_contribution: i128,
     deadline: u64,
 ) {
     let topics = (Symbol::new(env, "pool_created"), pool_id, creator);
-    env.events()
-        .publish(topics, (name, description, target_amount, deadline));
+    env.events().publish(
+        topics,
+        (name, description, target_amount, min_contribution, deadline),
+    );
 }
 
 pub fn pool_state_updated(env: &Env, pool_id: u64, new_state: PoolState) {
@@ -149,4 +152,9 @@ pub fn address_blacklisted(env: &Env, admin: Address, address: Address) {
 pub fn address_unblacklisted(env: &Env, admin: Address, address: Address) {
     let topics = (Symbol::new(env, "address_unblacklisted"), admin);
     env.events().publish(topics, address);
+}
+
+pub fn pool_metadata_updated(env: &Env, pool_id: u64, updater: Address, new_metadata_hash: String) {
+    let topics = (Symbol::new(env, "pool_metadata_updated"), pool_id, updater);
+    env.events().publish(topics, new_metadata_hash);
 }

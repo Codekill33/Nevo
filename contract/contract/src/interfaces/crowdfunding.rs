@@ -179,4 +179,13 @@ pub trait CrowdfundingTrait {
     fn unblacklist_address(env: Env, address: Address) -> Result<(), CrowdfundingError>;
 
     fn is_blacklisted(env: Env, address: Address) -> bool;
+
+    fn update_pool_metadata_hash(
+        env: Env,
+        pool_id: u64,
+        caller: Address,
+        new_metadata_hash: String,
+    ) -> Result<(), CrowdfundingError>;
+
+    fn get_pool_remaining_time(env: Env, pool_id: u64) -> Result<u64, CrowdfundingError>;
 }
