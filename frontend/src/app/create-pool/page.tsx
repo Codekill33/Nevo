@@ -9,7 +9,6 @@ import {
   ExternalLink,
   Calendar,
   DollarSign,
-  FileText,
   Image as ImageIcon,
   Link as LinkIcon,
 } from "lucide-react";
@@ -143,20 +142,21 @@ export default function CreatePoolPage() {
       setTxHash(result.txHash);
       setPoolId(result.poolId);
       setSubmissionState("success");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Pool creation error:", error);
       setSubmissionState("error");
       
       // Handle specific error types
-      if (error.message?.includes("User rejected")) {
+      const errorObj = error as { message?: string };
+      if (errorObj.message?.includes("User rejected")) {
         setErrorMessage("Transaction was rejected. Please try again.");
-      } else if (error.message?.includes("Simulation failed")) {
+      } else if (errorObj.message?.includes("Simulation failed")) {
         setErrorMessage("Transaction simulation failed. Please check your inputs.");
-      } else if (error.message?.includes("Transaction failed")) {
-        setErrorMessage(`Transaction failed: ${error.message}`);
+      } else if (errorObj.message?.includes("Transaction failed")) {
+        setErrorMessage(`Transaction failed: ${errorObj.message}`);
       } else {
         setErrorMessage(
-          error.message || "Failed to create pool. Please try again."
+          errorObj.message || "Failed to create pool. Please try again."
         );
       }
     }
