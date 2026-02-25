@@ -1,18 +1,16 @@
 #![cfg(test)]
 
-use soroban_sdk::{
-    Address, Env, String, Vec, testutils::Address as _, token
-};
+use soroban_sdk::{testutils::Address as _, token, Address, Env, String, Vec};
 
 use crate::{
-    base::{
-        types::PoolConfig,
-    },
+    base::types::PoolConfig,
     crowdfunding::{CrowdfundingContract, CrowdfundingContractClient},
 };
 
 fn create_token_contract<'a>(env: &Env, admin: &Address) -> token::StellarAssetClient<'a> {
-    let token_address = env.register_stellar_asset_contract_v2(admin.clone()).address();
+    let token_address = env
+        .register_stellar_asset_contract_v2(admin.clone())
+        .address();
     token::StellarAssetClient::new(env, &token_address)
 }
 
