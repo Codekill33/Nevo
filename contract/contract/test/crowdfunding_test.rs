@@ -382,6 +382,7 @@ fn test_extend_campaign_too_long() {
 #[test]
 fn test_get_campaign_fee_history() {
     let env = Env::default();
+    env.mock_all_auths();
     let (client, _admin, token_address) = setup_test(&env);
 
     // Using token_admin pattern from other tests
