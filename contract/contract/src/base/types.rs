@@ -35,6 +35,8 @@ pub struct PoolConfig {
     pub name: String,
     pub description: String,
     pub target_amount: i128,
+    // Minimum contribution allowed for this pool (in token smallest units)
+    pub min_contribution: i128,
     pub is_private: bool,
     pub duration: u64,
     pub created_at: u64,
@@ -51,6 +53,7 @@ pub struct PoolMetadata {
 pub const MAX_DESCRIPTION_LENGTH: u32 = 500;
 pub const MAX_URL_LENGTH: u32 = 200;
 pub const MAX_HASH_LENGTH: u32 = 100;
+pub const MAX_STRING_LENGTH: u32 = 200;
 
 impl PoolConfig {
     /// Validate pool configuration according to Nevo invariants.
@@ -70,6 +73,13 @@ impl PoolConfig {
 
         // Target amount must be strictly positive
         assert!(self.target_amount > 0, "target_amount must be > 0");
+
+        // Minimum contribution must be non-negative and not exceed the target
+        assert!(self.min_contribution >= 0, "min_contribution must be >= 0");
+        assert!(
+            self.min_contribution <= self.target_amount,
+            "min_contribution must be <= target_amount"
+        );
 
         // Duration must be strictly positive (non-zero)
         assert!(self.duration > 0, "duration must be > 0");
@@ -217,6 +227,7 @@ pub enum StorageKey {
     CampaignDonor(BytesN<32>, Address),
     Contribution(BytesN<32>, Address),
     PoolContribution(u64, Address),
+    PoolContributors(u64),
 
     NextPoolId,
     IsPaused,
@@ -233,6 +244,12 @@ pub enum StorageKey {
     GlobalTotalRaised,
     CampaignCancelled(BytesN<32>),
     EmergencyContact,
+    CampaignFeeHistory(BytesN<32>),
+    Blacklist(Address),
+
+    ReentrancyLock(u64),
+    EmergencyWithdrawalLock,
+    PoolCreator(u64),
 }
 
 #[cfg(test)]
@@ -247,6 +264,7 @@ mod tests {
             name: String::from_str(&env, "Education Fund"),
             description: String::from_str(&env, "Fund for student education materials"),
             target_amount: 1_000_000,
+            min_contribution: 0,
             is_private: false,
             duration: 30 * 24 * 60 * 60,
             created_at: 1,
@@ -263,6 +281,7 @@ mod tests {
             name: String::from_str(&env, "Invalid Target"),
             description: String::from_str(&env, "Description"),
             target_amount: 0,
+            min_contribution: 0,
             is_private: false,
             duration: 30 * 24 * 60 * 60,
             created_at: 1,
